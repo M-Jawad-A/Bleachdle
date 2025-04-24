@@ -40,13 +40,38 @@
         transform: translate(-50%, -50%);
     }
 
+    .search-container {
+        position: relative;
+        display: inline-block;
+        width: 20%;
+    }
+
     #characterGuess {
         position: relative;
-        width: 20%;
+        width: 100%;
         font-family: "Quan Slim Thin",monospace;
         font-size: xx-large;
         border: 1px solid #ddd;
         margin-bottom: 12px;
+        padding-right: 50px;
+        box-sizing: border-box;
+    }
+
+    .search-button {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 80%;
+        width: 50px;
+        background-color: #f6f6f6;
+        border: 1px solid #ddd;
+        border-left: none;
+        cursor: pointer;
+        font-size: large;
+    }
+
+    .search-button:hover {
+        background-color: #ddd;
     }
 
     #nameList {
@@ -84,9 +109,24 @@
         grid-template-rows: repeat(auto-fill, 1fr);
         width: 40%;
         gap: 8px;
+        padding: 10px;
     }
 
+    .grid-row {
+        display: contents;
+    }
 
+    .grid-row > div {
+        padding: 8px;
+        border: 1px solid #ddd;
+        background-color: white;
+        font-family: "Quan Slim Thin",monospace;
+    }
+
+    .guessGrid > div:first-child {
+        font-weight: bold;
+        background-color: #f0f0f0;
+    }
 
     </style>
 </head>
@@ -100,7 +140,10 @@
         <div class="headerText">GUESS THE BLEACH CHARACTER OF THE DAY</div>
         <div class="subText">Type any character to begin... </div>
     </div>
-    <input type="text" id="characterGuess" onkeyup="filterSearch()" placeholder="Type character name...">
+    <div class="search-container">
+        <input type="text" id="characterGuess" onkeyup="filterSearch()" placeholder="Type character name...">
+        <button class="search-button" onclick="selectFirstMatch()">✓</button>
+    </div>
 
     <ul id="nameList">
         <li><a href="#">Candice Catnipp</a></li>
@@ -143,8 +186,53 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-    <script src=”https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
+        // Function to select the first visible match from the dropdown
+        function selectFirstMatch() {
+            const listItems = document.querySelectorAll('#nameList li');
+            for (let i = 0; i < listItems.length; i++) {
+                if (listItems[i].style.display !== 'none') {
+                    const characterName = listItems[i].querySelector('a').textContent;
+                    document.getElementById('characterGuess').value = characterName;
+                    document.getElementById('nameList').style.display = 'none';
+                    loadCharacterData(characterName);
+                    break;
+                }
+            }
+        }
+
+        // Function to load and display CSV data for a specific character
+        function loadCharacterData(characterName) {
+            d3.csv("classic.csv").then(function(data) {
+                // Get the grid container
+                const gridContainer = document.querySelector('.guessGrid');
+                
+                // Clear existing content except headers
+                while (gridContainer.children.length > 7) {
+                    gridContainer.removeChild(gridContainer.lastChild);
+                }
+
+                // Find the character in the CSV data
+                const character = data.find(char => char.Character === characterName);
+                
+                if (character) {
+                    const row = document.createElement('div');
+                    row.className = 'grid-row';
+                    
+                    // Create cells for each property
+                    const properties = ['Character', 'Sex', 'Race', 'Hair Colour', 'Faction', 'Weapon Type', 'Arc Introduced'];
+                    properties.forEach(prop => {
+                        const cell = document.createElement('div');
+                        cell.textContent = character[prop];
+                        row.appendChild(cell);
+                    });
+                    
+                    gridContainer.appendChild(row);
+                }
+            });
+        }
+
         function filterSearch() {
             var input, filter, ul, li, a, i, txtValue;
             input = document.getElementById('characterGuess');
@@ -171,11 +259,22 @@
                 }
             }
         }
+
+        // Add click event listeners to the list items
+        document.addEventListener('DOMContentLoaded', function() {
+            const listItems = document.querySelectorAll('#nameList li a');
+            listItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const characterName = this.textContent;
+                    document.getElementById('characterGuess').value = characterName;
+                    document.getElementById('nameList').style.display = 'none';
+                    loadCharacterData(characterName);
+                });
+            });
+        });
     </script>
     <script>
-        d3.csv("/classic.csv").then(function (data) {
-            var classicData = data;
-        })
         function addCharacterGuess() {
             const playerGuess = document.getElementById('characterGuess');
             

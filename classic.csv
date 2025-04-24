@@ -1,25 +1,6 @@
-Character Name,Sex,Race,Hair Colour,Faction,Weapon Type,Arc Introduced
-Candice Catnipp,Female,Quincy,Light-Green,Wandenreich,Bow,The Thousand Year Blood War
-Perninda Parnkgjas,Genderless,Quincy,N/A,Wandenreich,Bow,The Thousand Year Blood War
-Mask de Masculin,Male,Quincy,Blonde,Wandenreich,None,The Thousand Year Blood War
-Jerome Guizbatt,Male,Quincy,White,Wandenreich,Bow,The Thousand Year Blood War
-Nianzol Weizol,Male,Quincy,Black,Wandenreich,Bow,The Thousand Year Blood War
-Yhwach,Male,Quincy,Black,Wandenreich,Sword,The Thousand Year Blood War
-Ichigo Kurosaki,Male,Human,Orange,Karakura Town,Sword,Agent of the Shinigami
-Orihime Inoue,Female,Human,Burnt Orange,Karakura Town,Hairclip,Agent of the Shinigami
-Yasutora Sado,Male,Human,Brown,Karakura Town,None,Agent of the Shinigami
-Kisuke Urahara,Male,Soul,Light-Blond,Urahara Shop,Sword,Agent of the Shinigami
-Yoruichi Shihoin,Female,Soul,Black,Urahara Shop,None,Agent of the Shinigami
-Isshin Kurosaki,Male,Soul,Black,Karakura Town,Sword,Agent of the Shinigami
-Shunsui Kyouraku,Male,Soul,Brown,Gotei Thirteen,Sword,Soul Society
-Nanao Ise,Female,Soul,Black,Gotei Thirteen,None,Soul Society
-Sui-Feng,Female,Soul,Black,Gotei Thirteen,Sword,Soul Society
-Marechiyo Omaeda,Male,Soul,Black,Gotei Thirteen,Sword,Soul Society
-Rojuro Otoribashi,Male,Soul,Blonde,Gotei Thirteen,Sword,Arrancar
-Izuru Kira,Male,Soul,Blonde,Gotei Thirteen,Sword,Soul Society
-Nelilel Tu Odelschwanck,Female,Arrancar,Green,Hueco Mundo,Sword,Hueco Mundo
-Dordoni Alessandro Del Socaccio,Male,Arrancar,Black,Gotei Thirteen,Sword,Hueco Mundo
-Cirucci Sanderwicci,Female,Arrancar,Purple,Gotei Thirteen,Sword,Hueco Mundo
-Charlotte Chuhlhourne,Male,Arrancar,Black,Gotei Thirteen,Sword,Fake Karakura Town
-Luppi Antenor,Male,Arrrancar,Black,Gotei Thirteen,Sword,Arrancar
-Tier Harribel,Female,Arrancar,Blonde,Hueco Mundo,Sword,Arrancar
+Character,Sex,Race,Hair Colour,Faction,Weapon Type,Arc Introduced
+Ichigo Kurosaki,Male,Human/Shinigami/Hollow,Orange,Substitute Shinigami,Zanpakuto,Soul Society
+Orihime Inoue,Female,Human,Brown,Human,Healing Powers,Soul Society
+Rukia Kuchiki,Female,Shinigami,Black,Gotei 13,Zanpakuto,Soul Society
+Renji Abarai,Male,Shinigami,Red,Gotei 13,Zanpakuto,Soul Society
+Byakuya Kuchiki,Male,Shinigami,Black,Gotei 13,Zanpakuto,Soul Society
