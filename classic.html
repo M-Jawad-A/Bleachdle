@@ -53,6 +53,7 @@
         list-style-type: none;
         padding: 0;
         margin: 0;
+        display: none;
     }
 
     #nameList li a {
@@ -76,9 +77,9 @@
 
     .guessGrid {
         display: grid;
-        position: center;
+        margin: 0 auto;
         background-color: #f6f6f6;
-        font-family: "Bleach",monospace;
+        font-family: "AvantGarde LT Medium", monospace;
         grid-template-columns: repeat(7, 1fr);
         grid-template-rows: repeat(auto-fill, 1fr);
         width: 40%;
@@ -151,22 +152,21 @@
             ul = document.getElementById("nameList");
             li = ul.getElementsByTagName('li');
 
-            for (i = 0; i < li.length; i++) {
-                a = li[i].getElementsByTagName("a")[0];
-                txtValue = a.textContent || a.innerText;
+            // Hide the entire list if input is empty
+            if (filter === "") {
+                ul.style.display = "none";
+                return;
+            } else {
+                ul.style.display = "block";
             }
 
             // Loop through all list items, and hide those who don't match the search query
             for (i = 0; i < li.length; i++) {
-                console.log(li[i])
                 a = li[i].getElementsByTagName("a")[0];
                 txtValue = a.textContent || a.innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1 && txtValue !== " ")  {
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
                     li[i].style.display = "";
-                } else if (txtValue === "") {
-                    li[i].style.display = "none";
-                }
-                else {
+                } else {
                     li[i].style.display = "none";
                 }
             }
