@@ -228,6 +228,82 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
+        // Helper function to parse a CSV row
+        function parseCSVRow(row) {
+            // Define the expected number of columns based on the headers
+            const expectedColumns = 7; // Character Name, Sex, Race, Hair Colour, Faction, Weapon Type, Arc Introduced
+            
+            // Split by tab if present (in case the file was copied from a table)
+            if (row.includes('\t')) {
+                return row.split('\t').map(val => val.trim());
+            }
+            
+            // First try to split by visible column boundaries
+            const initialSplit = row.split(/(?<=\S)\s{2,}(?=\S)/);
+            if (initialSplit.length === expectedColumns) {
+                return initialSplit.map(val => val.trim());
+            }
+
+            // If that doesn't work, use a more sophisticated comma splitting approach
+            const values = [];
+            const parts = row.split(',').map(part => part.trim());
+            
+            let i = 0;
+            while (i < parts.length) {
+                let value = parts[i];
+                
+                // Check if this is the start of a compound value
+                if (i < parts.length - 1) {
+                    // For Race column that might have multiple parts
+                    if ((value.includes("Human") || value.includes("Soul") || 
+                         value.includes("Hollow") || value.includes("Quincy") || 
+                         value.includes("Arrancar")) && 
+                        i < parts.length - 1) {
+                        
+                        // Look ahead to see if next parts are also race-related
+                        let nextIndex = i + 1;
+                        while (nextIndex < parts.length) {
+                            const nextPart = parts[nextIndex].trim();
+                            if (nextPart.includes("Human") || nextPart.includes("Soul") || 
+                                nextPart.includes("Hollow") || nextPart.includes("Quincy") || 
+                                nextPart.includes("Arrancar")) {
+                                value += ", " + nextPart;
+                                nextIndex++;
+                            } else {
+                                break;
+                            }
+                        }
+                        i = nextIndex;
+                        values.push(value);
+                        continue;
+                    }
+                    
+                    // For other known compound values
+                    if ((value.includes("Karakura") && parts[i + 1].trim().includes("Town")) ||
+                        (value.includes("The") && parts[i + 1].trim().includes("Thousand"))) {
+                        value = value + ", " + parts[i + 1].trim();
+                        if (parts[i + 2] && parts[i + 2].trim().includes("Year")) {
+                            value += ", " + parts[i + 2].trim();
+                        }
+                        if (parts[i + 3] && parts[i + 2] && parts[i + 3].trim().includes("Blood") && parts[i + 2].trim().includes("Year")) {
+                            value += ", " + parts[i + 3].trim();
+                        }
+                        if (parts[i + 4] && parts[i + 3] && parts[i + 4].trim().includes("War") && parts[i + 3].trim().includes("Blood")) {
+                            value += ", " + parts[i + 4].trim();
+                        }
+                        i += value.split(',').length;
+                        values.push(value);
+                        continue;
+                    }
+                }
+                
+                values.push(value);
+                i++;
+            }
+
+            return values;
+        }
+
         // Function to load CSV data and generate dropdown list
         function loadCSVAndGenerateList() {
             fetch('classic.csv')
@@ -242,20 +318,36 @@
                         throw new Error('CSV file is empty');
                     }
                     
-                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
-                    if (lines.length < 2) {
+                    console.log("Raw CSV text:", csvText);
+                    
+                    // Parse CSV text into rows, handling both \n and \r\n
+                    const rows = csvText.split(/\r?\n/)
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                    
+                    console.log("Parsed rows:", rows);
+                    
+                    if (rows.length < 2) {
                         throw new Error('CSV file must have at least a header and one data row');
                     }
 
+                    // Parse headers
+                    const headers = parseCSVRow(rows[0]);
+                    console.log("Headers:", headers);
+                    
                     const nameList = document.getElementById('nameList');
                     nameList.innerHTML = ''; // Clear any existing items
 
-                    // Skip the header row and process each data row
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',');
-                        if (values.length > 0) {
+                    // Process each data row
+                    for (let i = 1; i < rows.length; i++) {
+                        const values = parseCSVRow(rows[i]);
+                        console.log(`Row ${i + 1} values:`, values);
+                        
+                        // Check if we have enough values (allowing for some flexibility due to compound values)
+                        if (values.length >= headers.length - 1 && values.length <= headers.length + 1) {
                             const characterName = values[0].trim();
                             if (characterName) {
+                                console.log("Adding character:", characterName);
                                 const li = document.createElement('li');
                                 const a = document.createElement('a');
                                 a.href = '#';
@@ -263,6 +355,8 @@
                                 li.appendChild(a);
                                 nameList.appendChild(li);
                             }
+                        } else {
+                            console.warn(`Row ${i + 1} has incorrect number of values. Expected ${headers.length}, got ${values.length}`);
                         }
                     }
 
@@ -287,6 +381,56 @@
         // Load the CSV and generate the list when the page loads
         document.addEventListener('DOMContentLoaded', loadCSVAndGenerateList);
 
+        // Helper function for set equality
+        function setsAreEqual(a, b) {
+            if (a.size !== b.size) return false;
+            for (let val of a) {
+                if (!b.has(val)) return false;
+            }
+            return true;
+        }
+
+        function compareCharacter(character) {
+            // Target character attributes
+            const comparisonAttributes = {
+                'Character Name': 'Ichigo Kurosaki',
+                'Sex': 'Male',
+                'Race': 'Human, Soul, Hollow, Quincy',
+                'Hair Colour': 'Orange',
+                'Faction': 'Karakura Town',
+                'Weapon Type': 'Sword',
+                'Arc Introduced': 'Agent of the Shinigami'
+            };
+
+            // Compare each attribute separately
+            const matchResults = {};
+            for (const prop in comparisonAttributes) {
+                if (prop === 'Race') {
+                    const targetRaces = comparisonAttributes['Race'].split(',')
+                        .map(r => r.trim().toLowerCase().replace(/^['\"]+|['\"]+$/g, ''));
+                    const charRaces = (character['Race'] || '').split(',')
+                        .map(r => r.trim().toLowerCase().replace(/^['\"]+|['\"]+$/g, ''));
+                    const targetSet = new Set(targetRaces);
+                    const charSet = new Set(charRaces);
+                    const intersection = [...charSet].filter(r => targetSet.has(r));
+                    if (setsAreEqual(targetSet, charSet)) {
+                        matchResults[prop] = 'correct';
+                    } else if (intersection.length > 0) {
+                        matchResults[prop] = 'partial';
+                    } else {
+                        matchResults[prop] = 'incorrect';
+                    }
+                } else {
+                    if (character[prop] === comparisonAttributes[prop]) {
+                        matchResults[prop] = 'correct';
+                    } else {
+                        matchResults[prop] = 'incorrect';
+                    }
+                }
+            }
+            return matchResults;
+        }
+
         // Function to load and display CSV data for a specific character
         function loadCharacterData(characterName) {
             console.log("Loading data for:", characterName);
@@ -310,31 +454,38 @@
                     }
                     
                     console.log("CSV file loaded successfully");
-                    // Parse the CSV text manually
-                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
-                    if (lines.length < 2) {
+                    // Parse the CSV text
+                    const rows = csvText.split(/\r?\n/)
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                    
+                    console.log("All rows:", rows);
+                    
+                    if (rows.length < 2) {
                         throw new Error('CSV file must have at least a header and one data row');
                     }
 
-                    const headers = lines[0].split(',').map(header => header.trim());
-                    console.log("CSV Headers:", headers);
+                    const headers = parseCSVRow(rows[0]);
+                    console.log("Headers:", headers);
                     const data = [];
                     
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',');
-                        if (values.length !== headers.length) {
-                            console.warn(`Skipping malformed row ${i + 1}`);
-                            continue;
-                        }
+                    for (let i = 1; i < rows.length; i++) {
+                        const values = parseCSVRow(rows[i]);
+                        console.log(`Processing row ${i + 1}:`, values);
                         
-                        const entry = {};
-                        headers.forEach((header, index) => {
-                            entry[header] = values[index] ? values[index].trim() : '';
-                        });
-                        data.push(entry);
+                        // Only process rows with the correct number of values
+                        if (values.length === headers.length) {
+                            const entry = {};
+                            headers.forEach((header, index) => {
+                                entry[header] = values[index] ? values[index].trim() : '';
+                            });
+                            data.push(entry);
+                        } else {
+                            console.warn(`Row ${i + 1} has incorrect number of values. Expected ${headers.length}, got ${values.length}`);
+                        }
                     }
                     
-                    // Find the character in the first column only with null checks
+                    // Find the character in the data array
                     const character = data.find(char => {
                         if (!char || !char['Character Name']) {
                             return false;
@@ -348,6 +499,10 @@
                         console.log("Character not found in CSV data");
                         return;
                     }
+
+                    // Compare with target character
+                    const matchResults = compareCharacter(character);
+                    console.log("Match results:", matchResults);
 
                     // Get the grid container
                     const gridContainer = document.querySelector('.guessGrid');
@@ -376,18 +531,18 @@
                         const imgContainer = document.createElement('div');
                         imgContainer.className = 'cell-image';
                         
-                        // Create and set up the images
-                        const defaultImg = document.createElement('img');
-                        defaultImg.className = 'default-image';
-                        defaultImg.src = 'assets/character.png';
-                        defaultImg.alt = 'Default character image';
-                        defaultImg.onerror = function() {
-                            console.log('Default image failed to load');
-                            this.style.display = 'none';
-                        };
-
                         // Special handling for Character Name column
                         if (prop === 'Character Name') {
+                            // Use default character.png for Character column
+                            const defaultImg = document.createElement('img');
+                            defaultImg.className = 'default-image';
+                            defaultImg.src = 'assets/character.png';
+                            defaultImg.alt = 'Default character image';
+                            defaultImg.onerror = function() {
+                                console.log('Default image failed to load');
+                                this.style.display = 'none';
+                            };
+
                             const characterImg = document.createElement('img');
                             characterImg.className = 'character-image';
                             const imageName = characterName.toLowerCase().replace(/\s+/g, '_') + '.png';
@@ -400,13 +555,42 @@
                             imgContainer.appendChild(defaultImg);
                             imgContainer.appendChild(characterImg);
                         } else {
-                            // For other columns, only use the default image
+                            // For other columns, use the appropriate background image based on match result for this property
+                            const defaultImg = document.createElement('img');
+                            defaultImg.className = 'default-image';
+                            
+                            // Set the appropriate background image based on match result for this property
+                            const matchType = matchResults[prop];
+                            switch(matchType) {
+                                case 'correct':
+                                    defaultImg.src = 'assets/correct.png';
+                                    break;
+                                case 'partial':
+                                    defaultImg.src = 'assets/partial.png';
+                                    break;
+                                case 'incorrect':
+                                    defaultImg.src = 'assets/incorrect.png';
+                                    break;
+                                default:
+                                    defaultImg.src = 'assets/character.png';
+                            }
+                            
+                            defaultImg.alt = 'Background image';
+                            defaultImg.onerror = function() {
+                                console.log('Background image failed to load');
+                                this.style.display = 'none';
+                            };
+                            
                             imgContainer.appendChild(defaultImg);
                             
                             // Add text overlay for non-Character columns
                             const textOverlay = document.createElement('div');
                             textOverlay.className = 'text-overlay';
-                            textOverlay.textContent = character[prop];
+                            let displayValue = character[prop];
+                            if (prop === 'Race') {
+                                displayValue = character[prop].split(',').map(r => r.trim().replace(/^['\"]+|['\"]+$/g, '')).join(', ');
+                            }
+                            textOverlay.textContent = displayValue;
                             imgContainer.appendChild(textOverlay);
                         }
                         
