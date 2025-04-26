@@ -105,9 +105,9 @@
         margin: 0 auto;
         background-color: #f6f6f6;
         font-family: "AvantGarde LT Medium", monospace;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, 150px);
         grid-template-rows: repeat(auto-fill, 1fr);
-        width: 40%;
+        width: 1050px;
         gap: 8px;
         padding: 10px;
     }
@@ -121,11 +121,76 @@
         border: 1px solid #ddd;
         background-color: white;
         font-family: "Quan Slim Thin",monospace;
+        width: 150px;
+        min-height: 100px;
     }
 
     .guessGrid > div:first-child {
         font-weight: bold;
         background-color: #f0f0f0;
+    }
+
+    .cell-image {
+        width: 100%;
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        position: relative;
+    }
+
+    .cell-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .cell-image .default-image {
+        z-index: 1;
+    }
+
+    .cell-image .character-image {
+        z-index: 2;
+    }
+
+    .text-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        font-family: "Quan Slim Thin", monospace;
+        font-size: large;
+        text-align: center;
+        padding: 5px;
+        z-index: 3;
+    }
+
+    .grid-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border: 1px solid #ddd;
+        background-color: white;
+        min-height: 100px;
+        width: 150px;
+    }
+
+    .cell-text {
+        text-align: center;
+        font-family: "Quan Slim Thin", monospace;
+        font-size: large;
     }
 
     </style>
@@ -146,32 +211,8 @@
     </div>
 
     <ul id="nameList">
-        <li><a href="#">Candice Catnipp</a></li>
-        <li><a href="#">Charlotte Chuhlhourne</a></li>
-        <li><a href="#">Cirucci Sanderwicci</a></li>
-        <li><a href="#">Dordoni Alessandro Del Socaccio</a></li>
-        <li><a href="#">Ichigo Kurosaki</a></li>
-        <li><a href="#">Isshin Kurosaki</a></li>
-        <li><a href="#">Izuru Kira</a></li>
-        <li><a href="#">Jerome Guizbatt</a></li>
-        <li><a href="#">Kisuke Urahara</a></li>
-        <li><a href="#">Luppi Antenor</a></li>
-        <li><a href="#">Marechiyo Omaeda</a></li>
-        <li><a href="#">Mask de Masculin</a></li>
-        <li><a href="#">Nanao Ise</a></li>
-        <li><a href="#">Nelilel Tu Odelschwanck</a></li>
-        <li><a href="#">Nianzol Weizol</a></li>
-        <li><a href="#">Orihime Inoue</a></li>
-        <li><a href="#">Perninda Parnkgjas</a></li>
-        <li><a href="#">Rojuro Otoribashi</a></li>
-        <li><a href="#">Shunsui Kyouraku</a></li>
-        <li><a href="#">Sui-Feng</a></li>
-        <li><a href="#">Tier Harribel</a></li>
-        <li><a href="#">Yasutora Sado</a></li>
-        <li><a href="#">Yhwach</a></li>
-        <li><a href="#">Yoruichi Shihoin</a></li>
+        <!-- List items will be generated dynamically -->
     </ul>
-
 
     <div class="guessGrid">
         <div class="div1">CHARACTER</div>
@@ -183,13 +224,224 @@
         <div class="div7">ARC INTRODUCED</div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
+        // Function to load CSV data and generate dropdown list
+        function loadCSVAndGenerateList() {
+            fetch('classic.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('CSV file not found');
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    if (!csvText) {
+                        throw new Error('CSV file is empty');
+                    }
+                    
+                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                    if (lines.length < 2) {
+                        throw new Error('CSV file must have at least a header and one data row');
+                    }
+
+                    const nameList = document.getElementById('nameList');
+                    nameList.innerHTML = ''; // Clear any existing items
+
+                    // Skip the header row and process each data row
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',');
+                        if (values.length > 0) {
+                            const characterName = values[0].trim();
+                            if (characterName) {
+                                const li = document.createElement('li');
+                                const a = document.createElement('a');
+                                a.href = '#';
+                                a.textContent = characterName;
+                                li.appendChild(a);
+                                nameList.appendChild(li);
+                            }
+                        }
+                    }
+
+                    // Add click event listeners to the new list items
+                    const listItems = document.querySelectorAll('#nameList li a');
+                    listItems.forEach(item => {
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const characterName = this.textContent;
+                            document.getElementById('characterGuess').value = characterName;
+                            document.getElementById('nameList').style.display = 'none';
+                            loadCharacterData(characterName);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading CSV:', error);
+                    alert('Error loading character list. Please make sure the CSV file exists and is properly formatted.');
+                });
+        }
+
+        // Load the CSV and generate the list when the page loads
+        document.addEventListener('DOMContentLoaded', loadCSVAndGenerateList);
+
+        // Function to load and display CSV data for a specific character
+        function loadCharacterData(characterName) {
+            console.log("Loading data for:", characterName);
+            
+            if (!characterName || typeof characterName !== 'string') {
+                console.error('Invalid character name provided');
+                return;
+            }
+
+            // First check if the CSV file exists
+            fetch('classic.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('CSV file not found. Please make sure you are running this through a local server.');
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    if (!csvText) {
+                        throw new Error('CSV file is empty');
+                    }
+                    
+                    console.log("CSV file loaded successfully");
+                    // Parse the CSV text manually
+                    const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                    if (lines.length < 2) {
+                        throw new Error('CSV file must have at least a header and one data row');
+                    }
+
+                    const headers = lines[0].split(',').map(header => header.trim());
+                    console.log("CSV Headers:", headers);
+                    const data = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',');
+                        if (values.length !== headers.length) {
+                            console.warn(`Skipping malformed row ${i + 1}`);
+                            continue;
+                        }
+                        
+                        const entry = {};
+                        headers.forEach((header, index) => {
+                            entry[header] = values[index] ? values[index].trim() : '';
+                        });
+                        data.push(entry);
+                    }
+                    
+                    // Find the character in the first column only with null checks
+                    const character = data.find(char => {
+                        if (!char || !char['Character Name']) {
+                            return false;
+                        }
+                        return char['Character Name'].toLowerCase() === characterName.toLowerCase();
+                    });
+                    
+                    console.log("Found character data:", character);
+                    
+                    if (!character) {
+                        console.log("Character not found in CSV data");
+                        return;
+                    }
+
+                    // Get the grid container
+                    const gridContainer = document.querySelector('.guessGrid');
+                    if (!gridContainer) {
+                        throw new Error('Grid container not found');
+                    }
+                    
+                    // Create new row for the character
+                    const row = document.createElement('div');
+                    row.className = 'grid-row';
+                    
+                    // Create cells for each property
+                    const properties = ['Character Name', 'Sex', 'Race', 'Hair Colour', 'Faction', 'Weapon Type', 'Arc Introduced'];
+                    properties.forEach(prop => {
+                        if (!character[prop]) {
+                            console.warn(`Property ${prop} not found for character ${characterName}`);
+                            return;
+                        }
+
+                        console.log(`Creating cell for ${prop}:`, character[prop]);
+
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        
+                        // Create image container
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'cell-image';
+                        
+                        // Create and set up the images
+                        const defaultImg = document.createElement('img');
+                        defaultImg.className = 'default-image';
+                        defaultImg.src = 'assets/character.png';
+                        defaultImg.alt = 'Default character image';
+                        defaultImg.onerror = function() {
+                            console.log('Default image failed to load');
+                            this.style.display = 'none';
+                        };
+
+                        // Special handling for Character Name column
+                        if (prop === 'Character Name') {
+                            const characterImg = document.createElement('img');
+                            characterImg.className = 'character-image';
+                            const imageName = characterName.toLowerCase().replace(/\s+/g, '_') + '.png';
+                            characterImg.src = `assets/${imageName}`;
+                            characterImg.alt = characterName;
+                            characterImg.onerror = function() {
+                                console.log(`Character image failed to load: ${imageName}`);
+                                this.style.display = 'none';
+                            };
+                            imgContainer.appendChild(defaultImg);
+                            imgContainer.appendChild(characterImg);
+                        } else {
+                            // For other columns, only use the default image
+                            imgContainer.appendChild(defaultImg);
+                            
+                            // Add text overlay for non-Character columns
+                            const textOverlay = document.createElement('div');
+                            textOverlay.className = 'text-overlay';
+                            textOverlay.textContent = character[prop];
+                            imgContainer.appendChild(textOverlay);
+                        }
+                        
+                        cell.appendChild(imgContainer);
+                        row.appendChild(cell);
+                    });
+                    
+                    // Append the new row to the grid
+                    gridContainer.appendChild(row);
+                    console.log("Grid update completed");
+
+                    // Remove the character from the dropdown list
+                    const nameList = document.getElementById('nameList');
+                    const listItems = nameList.getElementsByTagName('li');
+                    for (let i = 0; i < listItems.length; i++) {
+                        const listItem = listItems[i];
+                        const link = listItem.querySelector('a');
+                        if (link && link.textContent.toLowerCase() === characterName.toLowerCase()) {
+                            nameList.removeChild(listItem);
+                            break;
+                        }
+                    }
+
+                    // Clear the input field
+                    document.getElementById('characterGuess').value = '';
+                })
+                .catch(error => {
+                    console.error('Error loading CSV:', error);
+                    alert('Error loading CSV file. Please make sure you are running this through a local server (e.g., using Python\'s http.server or Live Server extension in VS Code).');
+                });
+        }
+
         // Function to select the first visible match from the dropdown
         function selectFirstMatch() {
+            console.log("selectFirstMatch works");
             const listItems = document.querySelectorAll('#nameList li');
             for (let i = 0; i < listItems.length; i++) {
                 if (listItems[i].style.display !== 'none') {
@@ -200,37 +452,6 @@
                     break;
                 }
             }
-        }
-
-        // Function to load and display CSV data for a specific character
-        function loadCharacterData(characterName) {
-            d3.csv("classic.csv").then(function(data) {
-                // Get the grid container
-                const gridContainer = document.querySelector('.guessGrid');
-                
-                // Clear existing content except headers
-                while (gridContainer.children.length > 7) {
-                    gridContainer.removeChild(gridContainer.lastChild);
-                }
-
-                // Find the character in the CSV data
-                const character = data.find(char => char.Character === characterName);
-                
-                if (character) {
-                    const row = document.createElement('div');
-                    row.className = 'grid-row';
-                    
-                    // Create cells for each property
-                    const properties = ['Character', 'Sex', 'Race', 'Hair Colour', 'Faction', 'Weapon Type', 'Arc Introduced'];
-                    properties.forEach(prop => {
-                        const cell = document.createElement('div');
-                        cell.textContent = character[prop];
-                        row.appendChild(cell);
-                    });
-                    
-                    gridContainer.appendChild(row);
-                }
-            });
         }
 
         function filterSearch() {
@@ -259,20 +480,6 @@
                 }
             }
         }
-
-        // Add click event listeners to the list items
-        document.addEventListener('DOMContentLoaded', function() {
-            const listItems = document.querySelectorAll('#nameList li a');
-            listItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const characterName = this.textContent;
-                    document.getElementById('characterGuess').value = characterName;
-                    document.getElementById('nameList').style.display = 'none';
-                    loadCharacterData(characterName);
-                });
-            });
-        });
     </script>
     <script>
         function addCharacterGuess() {
