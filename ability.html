@@ -228,7 +228,6 @@ area:hover {
     <img src="assets/mode_selection_ability.png" alt="Classic, Ability, Splash, Heart" usemap="#modeMap" id="modeImage">
     <map name="modeMap">
         <area shape="rect" coords="0,0,158,190" href="classic.html" alt="Classic Mode" title="Classic Mode">
-        <area shape="rect" coords="158,0,316,190" href="ability.html" alt="Ability Mode" title="Ability Mode">
         <area shape="rect" coords="316,0,474,190" href="splash.html" alt="Splash Mode" title="Splash Mode">
         <area shape="rect" coords="474,0,632,190" href="heart.html" alt="Heart Mode" title="Heart Mode">
     </map>
@@ -327,7 +326,7 @@ area:hover {
                 const headers = parseCSVRow(rows[0]);
                 console.log("Headers:", headers);
                 
-                // Initialize the text elements with the first character's data
+                // Initialize the text elements with the target character's data
                 const characterData = parseCSVRow(rows[6]);
                 document.querySelector('.quoteText').textContent = `"${characterData[1]}"`;
                 document.querySelector('.arcHintText').textContent = characterData[2];
