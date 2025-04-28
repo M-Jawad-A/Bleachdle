@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
@@ -58,24 +58,73 @@
         top: 30%;
         left: 53%;
         zoom: 70%;
-    }</style>
+    }
+
+.mode-selection {
+    position: relative;
+    width: 30%;
+    margin: 0 auto;
+    display: inline-block;
+}
+
+.mode-selection img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+area {
+    cursor: pointer;
+}
+
+area:hover {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+}</style>
 </head>
 <body>
 <img src="assets/bleachdle.png" class="logo" alt="bleachdle" onclick="window.location.href='index.html'">
-<div class="container">
-    <img src="assets/mode-selection.png" alt="Classic, Ability, Relationships, Silhouette">
+<div class="container mode-selection">
+    <img src="assets/mode_selection_heart.png" alt="Classic, Ability, Splash, Heart" usemap="#modeMap" id="modeImage">
+    <map name="modeMap">
+        <area shape="rect" coords="0,0,158,190" href="classic.html" alt="Classic Mode" title="Classic Mode">
+        <area shape="rect" coords="158,0,316,190" href="ability.html" alt="Ability Mode" title="Ability Mode">
+        <area shape="rect" coords="316,0,474,190" href="splash.html" alt="Splash Mode" title="Splash Mode">
+        <area shape="rect" coords="474,0,632,190" href="heart.html" alt="Heart Mode" title="Heart Mode">
+    </map>
 </div>
 <div class="container">
     <img src="assets/text_bg.png" alt="background" style="width:40%">
     <div class="headerText">WHOSE HEART IS IN THESE CHARACTERS?</div>
-    <div class="headshot1"><img src="assets/kisuke_head.png"></div>
-    <div class="headshot2"><img src="assets/soi_fon_head.png"></div>
-    <div class="headshot3"><img src="assets/yoichi_head.png"></div>
+    <div class="headshot1"><img src="assets/kisuke_urahara.png"></div>
+    <div class="headshot2"><img src="assets/sui-feng.png"></div>
+    <div class="headshot3"><img src="assets/yoichi_shihoin.png"></div>
     <div class="subText">Type any character to begin... </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+    // Function to update image map coordinates based on image size
+    function updateImageMap() {
+        const img = document.getElementById('modeImage');
+        const map = document.querySelector('map[name="modeMap"]');
+        const areas = map.getElementsByTagName('area');
+        
+        const originalWidth = 632; // Updated to match actual image width
+        const scale = img.width / originalWidth;
+        
+        // Update coordinates for each area
+        for(let area of areas) {
+            let coords = area.getAttribute('coords').split(',');
+            let newCoords = coords.map(coord => Math.round(coord * scale));
+            area.setAttribute('coords', newCoords.join(','));
+        }
+    }
 
+    // Update coordinates when page loads and when window is resized
+    window.addEventListener('load', updateImageMap);
+    window.addEventListener('resize', updateImageMap);
+</script>
 </body>
 </html>
