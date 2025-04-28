@@ -18,11 +18,13 @@
         list-style-image: none;
         flex-direction: column;
     }
+
     .container {
         position: relative;
         text-align: center;
         color: white;
     }
+
     .headerText {
         position: absolute;
         top: 10%;
@@ -88,6 +90,67 @@
     display: block;
 }
 
+.search-container {
+    position: relative;
+    display: inline-block;
+    width: 20%;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#characterGuess {
+    position: relative;
+    width: 100%;
+    font-family: "Quan Slim Thin",monospace;
+    font-size: xx-large;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+    padding-right: 50px;
+    box-sizing: border-box;
+}
+
+.search-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 80%;
+    width: 50px;
+    background-color: #f6f6f6;
+    border: 1px solid #ddd;
+    border-left: none;
+    cursor: pointer;
+    font-size: large;
+}
+
+.search-button:hover {
+    background-color: #ddd;
+}
+
+#nameList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+#nameList li a {
+    position: center;
+    border: 1px solid #ddd;
+    margin-top: -1px;
+    background-color: #f6f6f6;
+    text-decoration: none;
+    font-size: xx-large;
+    font-family: "Quan Slim Thin",monospace;
+    text-align: left;
+    color: black;
+    display: inline-block;
+    width: 20%;
+}
+
+#nameList li a:hover:not(.header) {
+    background-color: #eee;
+}
+
 area {
     cursor: pointer;
 }
@@ -95,6 +158,68 @@ area {
 area:hover {
     outline: 2px solid rgba(255, 255, 255, 0.5);
 }
+
+.guesses-container {
+    position: relative;
+    width: 20%;
+    margin: 0 auto;
+    background-color: transparent;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.guess-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    gap: 20px;
+    position: relative;
+    width: 100%;
+}
+
+.guess-character-image {
+    width: auto !important;
+    height: auto !important;
+    max-width: 100px !important;
+    max-height: 100px !important;
+    display: block;
+    object-fit: contain;
+    z-index: 2;
+    position: relative;
+}
+
+.guess-name {
+    color: white;
+    font-family: "Quan Slim Thin", fantasy;
+    font-size: xxx-large;
+    text-align: center;
+    z-index: 2;
+    position: relative;
+    white-space: nowrap;
+}
+
+.guess-result {
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
     </style>
 </head>
 <body>
@@ -119,12 +244,179 @@ area:hover {
     <div class="subText">Type any character to begin... </div>
 </div>
 
+<div class="search-container">
+    <input type="text" id="characterGuess" onkeyup="filterSearch()" placeholder="Type character name...">
+    <button class="search-button" onclick="selectFirstMatch()">✓</button>
+</div>
+
+<ul id="nameList">
+    <!-- List items will be generated dynamically -->
+</ul>
+
+<div id="guessesContainer" class="guesses-container">
+    <!-- Guesses will be displayed here -->
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
 <script>
-    
+    let guessNo = 0; // Keep the counter variable for tracking
+
+    // Function to parse a single CSV row, handling quoted values
+    function parseCSVRow(row) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            
+            if (char === '"') {
+                // Toggle quote state
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                // Found a comma outside of quotes, add the current value
+                result.push(current.trim());
+                current = '';
+            } else {
+                // Add character to current value
+                current += char;
+            }
+        }
+        
+        // Add the last value
+        result.push(current.trim());
+        
+        return result;
+    }
+
+    // Function to load CSV data and generate dropdown list
+    function loadCSVAndGenerateList() {
+        console.log("Starting to load CSV...");
+        // Hide the guesses container initially
+        document.getElementById('guessesContainer').style.display = 'none';
+        
+        fetch('ability.csv')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(csvText => {
+                if (!csvText) {
+                    throw new Error('CSV file is empty');
+                }
+                
+                console.log("CSV loaded successfully");
+                
+                // Parse CSV text into rows, handling both \n and \r\n
+                const rows = csvText.split(/\r?\n/)
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+                
+                console.log(`Found ${rows.length} rows in CSV`);
+                
+                if (rows.length < 2) {
+                    throw new Error('CSV file must have at least a header and one data row');
+                }
+
+                // Parse headers
+                const headers = parseCSVRow(rows[0]);
+                console.log("Headers:", headers);
+                
+                // Initialize the text elements with the first character's data
+                const characterData = parseCSVRow(rows[6]);
+                document.querySelector('.quoteText').textContent = `"${characterData[1]}"`;
+                document.querySelector('.arcHintText').textContent = characterData[2];
+                document.querySelector('.enemyHintText').textContent = characterData[3];
+                
+                const nameList = document.getElementById('nameList');
+                if (!nameList) {
+                    throw new Error('Could not find nameList element in the DOM');
+                }
+                nameList.innerHTML = ''; // Clear any existing items
+
+                // Process each data row
+                for (let i = 1; i < rows.length; i++) {
+                    const values = parseCSVRow(rows[i]);
+                    
+                    if (values.length >= headers.length - 1 && values.length <= headers.length + 1) {
+                        const characterName = values[0].trim();
+                        if (characterName) {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.textContent = characterName;
+                            li.appendChild(a);
+                            nameList.appendChild(li);
+                        }
+                    }
+                }
+
+                // Add click event listeners to the new list items
+                const listItems = document.querySelectorAll('#nameList li a');
+                listItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const characterName = this.textContent;
+                        document.getElementById('characterGuess').value = characterName;
+                        document.getElementById('nameList').style.display = 'none';
+                        loadCharacterData(characterName);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading CSV:', error);
+                alert('Error loading character list: ' + error.message);
+            });
+    }
+
+    // Load the CSV and generate the list when the page loads
+    document.addEventListener('DOMContentLoaded', loadCSVAndGenerateList);
+     // Function to select the first visible match from the dropdown
+     function selectFirstMatch() {
+            console.log("selectFirstMatch works");
+            const listItems = document.querySelectorAll('#nameList li');
+            for (let i = 0; i < listItems.length; i++) {
+                if (listItems[i].style.display !== 'none') {
+                    const characterName = listItems[i].querySelector('a').textContent;
+                    document.getElementById('characterGuess').value = characterName;
+                    document.getElementById('nameList').style.display = 'none';
+                    loadCharacterData(characterName);
+                    break;
+                }
+            }
+        }
+
+    function filterSearch() {
+            var input, filter, ul, li, a, i, txtValue;
+            input = document.getElementById('characterGuess');
+            filter = input.value.toUpperCase();
+            ul = document.getElementById("nameList");
+            li = ul.getElementsByTagName('li');
+
+            // Hide the entire list if input is empty
+            if (filter === "") {
+                ul.style.display = "none";
+                return;
+            } else {
+                ul.style.display = "block";
+            }
+
+            // Loop through all list items, and hide those who don't match the search query
+            for (i = 0; i < li.length; i++) {
+                a = li[i].getElementsByTagName("a")[0];
+                txtValue = a.textContent || a.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
+        }
 
     // Function to update image map coordinates based on image size
     function updateImageMap() {
@@ -146,6 +438,102 @@ area:hover {
     // Update coordinates when page loads and when window is resized
     window.addEventListener('load', updateImageMap);
     window.addEventListener('resize', updateImageMap);
+
+    // Function to load character data when selected
+    function loadCharacterData(characterName) {
+        fetch('ability.csv')
+            .then(response => response.text())
+            .then(csvText => {
+                const rows = csvText.split(/\r?\n/);
+                const headers = parseCSVRow(rows[0]);
+                let targetCharacter = null;
+                
+                // Find the target character (the one with the current quote)
+                for (let i = 1; i < rows.length; i++) {
+                    const values = parseCSVRow(rows[i]);
+                    const currentQuote = document.querySelector('.quoteText').textContent.replace(/"/g, '').trim();
+                    if (values[1].trim() === currentQuote) {
+                        targetCharacter = values[0].trim();
+                        console.log("Target character found:", targetCharacter);
+                        break;
+                    }
+                }
+
+                // Find the guessed character's data
+                for (let i = 1; i < rows.length; i++) {
+                    const values = parseCSVRow(rows[i]);
+                    if (values[0].trim() === characterName) {
+                        // Increment guess counter
+                        guessNo++;
+                        
+                        // Hide arcHint image after 4 guesses
+                        if (guessNo >= 4) {
+                            document.querySelector('.arcHint').style.display = 'none';
+                        }
+                        if (guessNo >= 7) {
+                            document.querySelector('.enemyHint').style.display = 'none';
+                        }
+                        
+                        // Show the guesses container when first guess is made
+                        const guessesContainer = document.getElementById('guessesContainer');
+                        if (guessesContainer.children.length === 0) {
+                            guessesContainer.style.display = 'block';
+                        }
+                        
+                        // Add the guess to the container
+                        const guessItem = document.createElement('div');
+                        guessItem.className = 'guess-item';
+                        
+                        // Add character image
+                        const characterImage = document.createElement('img');
+                        characterImage.className = 'guess-character-image';
+                        characterImage.src = `assets/${characterName.toLowerCase().replace(/\s+/g, '_')}.png`;
+                        characterImage.alt = characterName;
+                        
+                        const guessName = document.createElement('div');
+                        guessName.className = 'guess-name';
+                        guessName.textContent = characterName;
+                        
+                        const guessResult = document.createElement('img');
+                        guessResult.className = 'guess-result';
+                        
+                        // Check if the guess is correct
+                        console.log("Comparing:", characterName, "with target:", targetCharacter);
+                        if (characterName === targetCharacter) {
+                            guessResult.src = 'assets/correct_character.png';
+                            console.log("Correct guess!");
+                        } else {
+                            guessResult.src = 'assets/incorrect_character.png';
+                            console.log("Incorrect guess!");
+                        }
+                        
+                        guessItem.appendChild(characterImage);
+                        guessItem.appendChild(guessName);
+                        guessItem.appendChild(guessResult);
+                        guessesContainer.appendChild(guessItem);
+
+                        // Clear the input box
+                        document.getElementById('characterGuess').value = '';
+                        
+                        // Remove the guessed character from the dropdown
+                        const nameList = document.getElementById('nameList');
+                        const listItems = nameList.getElementsByTagName('li');
+                        for (let i = 0; i < listItems.length; i++) {
+                            if (listItems[i].querySelector('a').textContent === characterName) {
+                                listItems[i].remove();
+                                break;
+                            }
+                        }
+                        
+                        break;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading character data:', error);
+                alert('Error loading character data. Please try again.');
+            });
+    }
 </script>
 </body>
 </html>
